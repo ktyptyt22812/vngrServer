@@ -8,13 +8,7 @@ from screenshot_server import ScreenshotServer
 from message_processor import MessageProcessor
 from gmod_api import GAPI
 #KE 6.3.5
-#пояснение к версиям
-#KE это энвайромент для работы некоторых служб
-# первая цифра это номер глобального обновления
-# вторая цифра это номер версии дополнительных служб
-# третья цифра это номер обновления
-# четвертая цифра это номер тестового обновления
-# пожалуйста не трогай и не копируй код для своих целей
+
 class BotOrchestrator:
     def __init__(self):
         self.config = Config()
@@ -92,11 +86,7 @@ class BotOrchestrator:
             print(f"Screenshot server failed to load: {e}")
         
         self.message_processor.set_bots(self.discord_bot, self.telegram_bot)
-        from room_manager import RoomManager
-        room_manager = RoomManager(self.gmod_connector, server_ip="твой_IP")
-        room_manager.start()
-        self.message_processor.set_room_manager(room_manager)
-        self.room_manager = room_manager  
+  
         tasks.append(asyncio.create_task(
             self._run_message_processor(),
             name="message_processor"
