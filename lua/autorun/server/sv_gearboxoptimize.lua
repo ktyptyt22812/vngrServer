@@ -3,102 +3,40 @@ Wl = {
 ["76561198079226909"] = true, -- Dloria
 }
 print("WL")
-hook.Add("CheckPassword", "GayCheckPassword", function(SteamID64, IP, ServerPass, ClientPass, ClientName)
+hook.Add("CheckPassword", "vngrCheckPassword", function(SteamID64, IP, ServerPass, ClientPass, ClientName)
 	if !Wl[SteamID64] then
-	--akychLib.DSendMessage(ClientName.." \n"..SteamID64,"Доступ запрещен",Color(255,0,0))
+	    --akychLib.DSendMessage(ClientName.." \n"..SteamID64,"Доступ запрещен",Color(255,0,0))
 	
-	RunConsoleCommand('say',ClientName.." / "..SteamID64)
+	    RunConsoleCommand('say',ClientName.." / "..SteamID64)
 	
-	return false, 'Тех работы'
+	    return false, 'Тех работы'
     end
 end)
 timer.Simple(1,function() 
-	hook.Remove("CheckPassword", "GayCheckPassword")
+	hook.Remove("CheckPassword", "vngrCheckPassword")
 end)
 local line = string.Explode( "\n",file.Read( "ulx/sbox_limits.txt" ,"DATA"))
 
 
 
 timer.Simple(15,function() 
-for k,v in pairs(line) do 
-local data = string.Explode( " ", v ) --Split Convar name from max limit
-if ConVarExists( data[1] ) then
-	RunConsoleCommand(data[1],9999)
-end
-end
+    for k,v in pairs(line) do 
+        local data = string.Explode( " ", v ) --Split Convar name from max limit
+        if ConVarExists( data[1] ) then
+	        RunConsoleCommand(data[1],9999)
+        end
+    end
 end)
 
-RunConsoleCommand('wire_holograms_max',9999)
+RunConsoleCommand('wire_holograms_max',200)
 RunConsoleCommand('sbox_maxfin_2',9999)
 
-local mks=function(name,path,lvl)path=path.."/"local tbl={}for k,v in pairs(file.Find("sound/"..path.."*","GAME")) do tbl[k]=path..v end sound.Add({name=name,channel=6,volume=1,level=lvl or 100,pitch=100,sound=tbl})end
-mks("spawnSound","gearbox/cj/vo/spawn",65)
-mks("DIE","gearbox/cj/painb",65)
-mks("ouch","gearbox/cj/paina",65)
-mks("randUI","gearbox/ui",65)
- 
-mks("buildon","gearbox/build/on",65)
-mks("buildoff","gearbox/build/off",65)
-
-
-mks("dance","gearbox/acts/dance",65)
-mks("mdance","gearbox/acts/muscule",65)
-mks("rdance","gearbox/acts/dance",65)
-
-mks("salute","gearbox/acts/salute",65)
-mks("bow","gearbox/acts/bow",65)
-mks("becon","gearbox/acts/becon",65)
-mks("laught","gearbox/acts/laught",65)
-mks("pers","gearbox/acts/pers",65)
-mks("cheer","gearbox/acts/cheer",65)
-
-mks("agree","gearbox/acts/agree",65)
-mks("disagree","gearbox/acts/disagree",65)
-mks("zombie","gearbox/acts/zombie",65)
-mks("forward","gearbox/acts/forward",65)
-mks("fall","gearbox/cj/vo/fall",65)
-mks("wave","gearbox/acts/wave",65)
-
-mks("gay","gearbox/acts/hait",65)
-
---mks("jump","gearbox/wa/jump",65)
-
-
-
---mks("gay","gearbox/wa/kill",65)
-
-
---mks("DUCK_IN","gearbox/cj/+duck")
---mks("DUCK_OUT","gearbox/cj/-duck")
 
 
 local T = {}
 
-T[1642] = "dance"
-T[1617] = "mdance"
-T[1643] = "rdance"
-T[1615] = "wave"
-T[1614] = "salute"
-T[1612] = "bow"
-T[1611] = "becon"
-T[1618] = "laught"
-T[1616] = "pers"
-T[1620] = "cheer"
-T[1610] = "agree"
-T[1613] = "disagree"
-T[1641] = "zombie"
-T[55] = "gay"
-T[53] = "forward"
-T[54] = "fall"
 
-hook.Add("PlayerStartTaunt","ActSound",function(p,a,l) 
 
---RunConsoleCommand("say",p:Name().."  "..a)
-if(p:Alive()) then
-	if T[a] == nil then return end
-	p:EmitSound( T[a] )
-end
-end)
 --"##VAC_ConnectionRefusedDetail"
 
 hook.Add("PlayerShouldTaunt","ActSound2",function(p,a) 
@@ -175,10 +113,6 @@ local function e2Stoplist()
 	    end
 end
 
-
-
-
-
 local function e2Stop()
 	for k, v in pairs( ents.FindByClass( "gmod_wire_expression2" ) ) do
 			v.error = true 
@@ -188,37 +122,25 @@ local function e2Stop()
 	    end
 end
 
-
 local function e2Stopram()
-    
 	for k, v in pairs( ents.FindByClass( "gmod_wire_expression2" ) ) do
 		if not v.error then
 			v.error = true 
 			v:PCallHook("destruct")
 			v:ResetContext()
 			v:PCallHook("construct")
-			v:Error( "Память перегружена все е2 остановлены." )
+			v:Error( "Память перегружена все е2 остановлены." )--todo, luarun for message in notify
 		end
 	 end
 end
 
-
-
- 
 local function stopStacked()
 	ents.FindInSphere(center, bRadius)
-
 	for _,v in next, ents.FindInSphere(this:LocalToWorld(this:OBBCenter()), this:BoundingRadius()) do end
-
 	local center = ent:LocalToWorld(ent:OBBCenter())
 	local bRadius = ent:BoundingRadius()
-
-	buildnotify(Color(0,0,0),"► ",Color(200,200,200),"["..v:EntIndex().."]["..v:GetClass().."] ",team.GetColor(owner:Team()),owner:Name(),Color(200,200,200),string.format(" Замечено агрессивное сближение предметов(Количество %s). ",Count)	)		
-
+	--buildnotify(Color(0,0,0),"► ",Color(200,200,200),"["..v:EntIndex().."]["..v:GetClass().."] ",team.GetColor(owner:Team()),owner:Name(),Color(200,200,200),string.format(" Замечено агрессивное сближение предметов(Количество %s). ",Count)	)		
 end
-
-
-
 
 
 local Loa= 0
@@ -246,7 +168,7 @@ local function destrouedd()
 	end
 end
 
-local LagLvlnakazanie =0
+local laglevel = 0
 local Lag = {
 
 [0] = function() 
@@ -286,7 +208,7 @@ end,
     akychLib.vk.vkAddMessage("[GB_lag]► Сервер лагает [Ultra Hard]")
 	end,
 }
-
+--todo: add holylib
 
 local Resol = {
 	[0] = 0,
@@ -336,13 +258,13 @@ akychLib.suka.lagforce = function ( vCorner1, vCorner2 )
 end
 
 local function unlages() 
-	timer.Create("unlag",4*LagLvlnakazanie,1,function() 
-		if LagLvlnakazanie < 1 then return end
-		LagLvlnakazanie = LagLvlnakazanie - 1 
-		buildnotify(Color(0,0,0),"► ",Color(200,200,200),"Уровень лагов сброшен до ",Color(85*LagLvlnakazanie,(255/LagLvlnakazanie) or 255,0),""..LagLvlnakazanie)
-		--RunConsoleCommand('say',LagLvlnakazanie..",|"..(1-(LagLvlnakazanie/5)))
-		game.SetTimeScale(math.Clamp(1-(LagLvlnakazanie/5),0.4,1)) 
-		if(LagLvlnakazanie>=1) then
+	timer.Create("unlag",4*laglevel,1,function() 
+		if laglevel < 1 then return end
+		laglevel = laglevel - 1 
+		buildnotify(Color(0,0,0),"► ",Color(200,200,200),"Уровень лагов сброшен до ",Color(85*laglevel,(255/laglevel) or 255,0),""..laglevel)
+		--RunConsoleCommand('say',laglevel..",|"..(1-(laglevel/5)))
+		game.SetTimeScale(math.Clamp(1-(laglevel/5),0.4,1)) 
+		if(laglevel>=1) then
 			unlages() 
 		end 
 	end)
@@ -367,18 +289,18 @@ end)
 local Testos = CurTime()
 hook.Add("Think","antelag",function() 
 	if Testos < CurTime() then 
-		local LagLvl = GetCurrentDelta()-Resol[LagLvlnakazanie] or 0
+		local LagLvl = GetCurrentDelta()-Resol[laglevel] or 0
 		Testos = CurTime()+0.3
 		--RunConsoleCommand('say',LagLvl)
 		if LagLvl > 5 then Lag[4]() sendLags(LagLvl) return end
 		if(LagLvl > 0.5) then
-			sendLags(LagLvl+LagLvlnakazanie)
+			sendLags(LagLvl+laglevel)
 			Testos = CurTime()+0.2+LagLvl/7
-			LagLvlnakazanie = LagLvlnakazanie + 1
-			LagLvlnakazanie = math.Clamp(LagLvlnakazanie,0,4) 
-			game.SetTimeScale(math.Clamp(1-(LagLvlnakazanie/5),0.2,1)) 
+			laglevel = laglevel + 1
+			laglevel = math.Clamp(laglevel,0,4) 
+            
 			unlages()
-			Lag[math.Clamp(LagLvlnakazanie,1,4)]()
+			Lag[math.Clamp(laglevel,1,4)]()
 		end
 	end
 end)
@@ -436,6 +358,7 @@ function PlayerHit( ent, inflictor, attacker, amount, dmginfo )
 		end
 end
 hook.Add( "EntityTakeDamage", "PlayerHit", PlayerHit )
+--[[
 timer.Simple(10,function() 
 	hook.Add( "PlayerSpawnedSENT", "freeze", function(ply,ent) 
 		timer.Simple(0,function() 
@@ -448,8 +371,7 @@ timer.Simple(10,function()
 		end)
 	end)
 end)
-
-
+]]
 timer.Simple(10,function() 
 	hook.Add( "PlayerSpawnedSWEP", "freeze", function(ply,ent) 
 		timer.Simple(0,function() 
