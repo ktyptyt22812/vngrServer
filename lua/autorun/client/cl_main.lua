@@ -67,6 +67,7 @@ function ChatTags(player, text, isTeam, something)
     return true
 end
 hook.Add("OnPlayerChat", "ChatTags", ChatTags)
+--[[]
 do
 	surface.CreateFont( "good", {
 		font = "Roboto thin",
@@ -251,7 +252,7 @@ do
 						surface.DrawTexturedRectRotated(currentX, currentY + 20, size3D, size3D, spriteSpin)
 					end
 				end
-				--]]
+
 			cam.End3D2D()
 		end
 	end
@@ -267,7 +268,7 @@ do
 	hook.Remove("Tick","tickexample")
 
 end
-
+]]
 
 local lastScreenshotTime = 0
 local cooldown = 10 

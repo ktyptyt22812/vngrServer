@@ -1,11 +1,9 @@
-
-local EntityCache = {}
-local PlayerCache = {}
-local UniqueID_Cache = {}
-local AccountID_Cache = {}
-local SteamID_Cache = {}
-local SteamID64_Cache = {}
-local GetClass_Cache = {}
+-- EntityCache/PlayerCache — массивы (sequential), совместимы с ipairs, #, pairs
+-- EntityCache_Set/PlayerCache_Set — словари для быстрой проверки наличия (O(1))
+local EntityCache     = {}
+local PlayerCache     = {}
+local EntityCache_Set = {}
+local PlayerCache_Set = {}
 
 local local_player = nil
 local gm_cache = nil
@@ -18,7 +16,6 @@ local gamemodes = {}
 local addons_length = 0
 local addons = {}
 local playing_demo = false
-local world_validated = false
 
 local tickinterval = nil
 local isosx = nil
@@ -73,7 +70,6 @@ end
 
 local _GetMap = GetMap
 function GetMap()
-    --я думаю карта не меняеться ща сессию, не обязательно кешировать
     return _GetMap()
 end
 
@@ -93,6 +89,11 @@ end
 
 function ScreenHeight() return ScrH() end
 function ScreenWidth()  return ScrW() end
+
+hook.Add("OnScreenSizeChanged", "CB_InvalidateScreenCache", function()
+    scrh = nil
+    scrw = nil
+end)
 
 local _TickInterval = TickInterval
 function TickInterval()
@@ -152,27 +153,27 @@ end
 
 local _GetDXLevel = GetDXLevel
 function GetDXLevel()
-    return _GetDXLevel() -- dxlevel
+    return _GetDXLevel()
 end
 
 local _SupportsPixelShaders_1_4 = SupportsPixelShaders_1_4
 function SupportsPixelShaders_1_4()
-    return _SupportsPixelShaders_1_4() -- supportspixel1_4
+    return _SupportsPixelShaders_1_4()
 end
 
 local _SupportsVertexShaders_2_0 = SupportsVertexShaders_2_0
 function SupportsVertexShaders_2_0()
-    return _SupportsVertexShaders_2_0() -- supportsvertex2_0
+    return _SupportsVertexShaders_2_0()
 end
 
 local _SupportsPixelShaders_2_0 = SupportsPixelShaders_2_0
 function SupportsPixelShaders_2_0()
-    return _SupportsPixelShaders_2_0() -- supportspixel2_0
+    return _SupportsPixelShaders_2_0()
 end
 
 local _SupportsHDR = SupportsHDR
 function SupportsHDR()
-    return _SupportsHDR() -- supportshdr
+    return _SupportsHDR()
 end
 
 local _isbool = isbool
@@ -184,7 +185,7 @@ end
 if CLIENT then
     local _LocalPlayer = LocalPlayer
     function LocalPlayer()
-        if local_player then return local_player end
+        if local_player and local_player:IsValid() then return local_player end
         local_player = _LocalPlayer()
         return local_player
     end
@@ -203,7 +204,6 @@ local _GetGames = GetGames
 function GetGames()
     if games_length > 0 then return games end
     local raw = _GetGames()
-    games_length = 0 --молодец какой
     for _, gametab in ipairs(raw) do
         games_length = games_length + 1
         games[games_length] = {
@@ -223,15 +223,14 @@ local _GetGamemodes = GetGamemodes
 function GetGamemodes()
     if gamemodes_length > 0 then return gamemodes end
     local raw = _GetGamemodes()
-    gamemodes_length = 0
     for _, gamemodetab in ipairs(raw) do
         gamemodes_length = gamemodes_length + 1
         gamemodes[gamemodes_length] = {
-            name        = gamemodetab.name,
-            title       = gamemodetab.title,
-            maps        = gamemodetab.maps,
-            menusystem  = gamemodetab.menusystem,
-            workshopid  = gamemodetab.workshopid,
+            name       = gamemodetab.name,
+            title      = gamemodetab.title,
+            maps       = gamemodetab.maps,
+            menusystem = gamemodetab.menusystem,
+            workshopid = gamemodetab.workshopid,
         }
     end
     return gamemodes
@@ -241,20 +240,19 @@ local _GetAddons = GetAddons
 function GetAddons()
     if addons_length > 0 then return addons end
     local raw = _GetAddons()
-    addons_length = 0
     for _, addontab in ipairs(raw) do
         addons_length = addons_length + 1
         addons[addons_length] = {
-            wsid        = addontab.wsid,
-            title       = addontab.title,
-            size        = addontab.size,
-            tags        = addontab.tags,
-            file        = addontab.file,
-            timeadded   = addontab.timeadded,
-            updated     = addontab.updated,
-            downloaded  = addontab.downloaded,
-            mounted     = addontab.mounted,
-            models      = addontab.models,
+            wsid       = addontab.wsid,
+            title      = addontab.title,
+            size       = addontab.size,
+            tags       = addontab.tags,
+            file       = addontab.file,
+            timeadded  = addontab.timeadded,
+            updated    = addontab.updated,
+            downloaded = addontab.downloaded,
+            mounted    = addontab.mounted,
+            models     = addontab.models,
         }
     end
     return addons
@@ -273,19 +271,6 @@ local function QuickTrace(origin, filter)
     util_TraceLine(tracedata, output)
     return output
 end
-
-local function GetPlayerTrace(self)
-    local eyepos = self:EyePos()
-    local start  = eyepos
-    local endpos = eyepos + self:GetAimVector() * Vector(1,1,1)
-    return start, endpos
-end
-
-local PlayerTrace     = {}
-local LastPlayerTrace = {}
-
-local PlayerAimTrace     = {}
-local LastPlayerAimTrace = {}
 
 
 local ENTITY = FindMetaTable("Entity")
@@ -315,32 +300,8 @@ function ENTITY:IsWorld()
     return t.world_validated
 end
 
-local _ENT_index = ENTITY.__index
-function ENTITY:__index(entval)
-    local t = self:GetTable()
-    local tabval = t[entval]
-    if tabval ~= nil then return tabval end
-    return ENTITY[entval]
-end
-
-local _PLY_index = PLAYER.__index
-function PLAYER:__index(entval)
-    local t = self:GetTable()
-    local tabval = t[entval]
-    if tabval ~= nil then return tabval end
-    return PLAYER[entval]
-end
-
-local _WEP_index = WEAPON.__index
-function WEAPON:__index(entval)
-    local t    = self:GetTable()
-    local ent  = ENTITY
-    local owner = self:GetOwner()
-    local tabval = t[entval]
-    local entval2 = ent[entval]
-    if tabval ~= nil then return tabval end
-    return WEAPON[entval]
-end
+-- ENTITY/PLAYER/WEAPON __index удалены — вызывали stack overflow.
+-- self:GetTable() внутри __index снова триггерит __index → бесконечная рекурсия.
 
 local _PLY_UniqueID = PLAYER.UniqueID
 function PLAYER:UniqueID()
@@ -377,45 +338,10 @@ function PLAYER:SteamID64()
     t.SteamID64_Cache = sid64
     return sid64
 end
-local _PLY_GetEyeTrace = PLAYER.GetEyeTrace
-function PLAYER:GetEyeTrace()
-    if not CLIENT then return _PLY_GetEyeTrace(self) end
-    local t = self:GetTable()
-    local framenum = FrameNumber()
-    if t.LastPlayerTrace == framenum then return t.PlayerTrace end
-    local eyepos = self:EyePos()
-    local tracedata = {
-        start  = eyepos,
-        endpos = eyepos + self:GetAimVector(),
-        filter = self,
-    }
-    local output = {}
-    util_TraceLine(tracedata, output)
-    t.PlayerTrace     = output
-    t.LastPlayerTrace = framenum
-    return output
-end
 
-local _PLY_GetEyeTraceNoCursor = PLAYER.GetEyeTraceNoCursor
-function PLAYER:GetEyeTraceNoCursor()
-    if not CLIENT then return _PLY_GetEyeTraceNoCursor(self) end
-    local t = self:GetTable()
-    local framenum = FrameNumber()
-    if t.LastPlayerAimTrace == framenum then return t.PlayerAimTrace end
-    local eyepos  = self:EyePos()
-    local angles  = self:EyeAngles()
-    local forward = angles:Forward()
-    local tracedata = {
-        start  = eyepos,
-        endpos = eyepos + forward,
-        filter = self,
-    }
-    local output = {}
-    util_TraceLine(tracedata, output)
-    t.PlayerAimTrace     = output
-    t.LastPlayerAimTrace = framenum
-    return output
-end
+
+
+
 
 function PLAYER:MouthMoveAnimation()
     -- stub
@@ -426,49 +352,6 @@ function PLAYER:IsListenServerHost()
     return _PLY_IsListenServerHost(self)
 end
 
-local player_GetAll = player.GetAll
-
-player.GetCount = function()
-    return #PlayerCache
-end
-
-player.GetAll = function()
-    local ply = player_GetAll  
-    return PlayerCache
-end
-
-player.Iterator = function()
-    return inext, PlayerCache
-end
-
-ents.GetAll = function()
-    local tab = EntityCache
-    return tab
-end
-
-ents.Iterator = function()
-    local ents_tab = EntityCache
-    return inext, ents_tab
-end
-
-
-local function InvalidateInternalEntityCache(ent, isPly)
-    if isPly then
-        PlayerCache[ent] = nil
-    end
-    EntityCache[ent] = nil
-end
-
-hook.Add("EntityRemoved", "CB_InvalidateEntityCache", function(ent)
-    local isPly = _ENT_IsPlayer(ent)
-    InvalidateInternalEntityCache(ent, isPly)
-end)
-
-hook.Add("PlayerDisconnected", "CB_InvalidatePlayerCache", function(ply)
-    InvalidateInternalEntityCache(ply, true)
-end)
-
-
 function PLAYER:RenderMe()
     -- stub
 end
@@ -478,7 +361,106 @@ function PLAYER:PlayerTick()
 end
 
 
+-- ======================================================
+-- Кэш сущностей и игроков
+-- EntityCache / PlayerCache     — массивы, совместимы с ipairs, #, pairs
+-- EntityCache_Set / PlayerCache_Set — словари для O(1) проверки наличия
+-- ======================================================
+
+local _player_GetAll = player.GetAll
+local _ents_GetAll   = ents.GetAll
+
+local function AddToEntityCache(ent)
+    if EntityCache_Set[ent] then return end
+    EntityCache_Set[ent] = true
+    EntityCache[#EntityCache + 1] = ent
+
+    if _ENT_IsPlayer(ent) then
+        if not PlayerCache_Set[ent] then
+            PlayerCache_Set[ent] = true
+            PlayerCache[#PlayerCache + 1] = ent
+        end
+    end
+end
+
+local function RemoveFromCache(cache, set, ent)
+    if not set[ent] then return end
+    set[ent] = nil
+    for i = 1, #cache do
+        if cache[i] == ent then
+            table.remove(cache, i)
+            return
+        end
+    end
+end
+
+local function InvalidateInternalEntityCache(ent, isPly)
+    if isPly then
+        RemoveFromCache(PlayerCache, PlayerCache_Set, ent)
+    end
+    RemoveFromCache(EntityCache, EntityCache_Set, ent)
+end
+
+
+player.GetCount = function()
+    return #PlayerCache
+end
+
+player.GetAll = function()
+    return PlayerCache
+end
+
+-- player.Iterator возвращает ipairs-совместимый итератор
+player.Iterator = function()
+    return ipairs(PlayerCache)
+end
+
+ents.GetAll = function()
+    return EntityCache
+end
+
+ents.Iterator = function()
+    return ipairs(EntityCache)
+end
+
+
+hook.Add("OnEntityCreated", "CB_AddEntityCache", function(ent)
+    -- Ждём следующий тик — сущность может ещё не быть полностью инициализирована
+    timer.Simple(0, function()
+        if IsValid(ent) then
+            AddToEntityCache(ent)
+        end
+    end)
+end)
+
+hook.Add("EntityRemoved", "CB_InvalidateEntityCache", function(ent)
+    InvalidateInternalEntityCache(ent, _ENT_IsPlayer(ent))
+end)
+
+hook.Add("PlayerDisconnected", "CB_InvalidatePlayerCache", function(ply)
+    InvalidateInternalEntityCache(ply, true)
+end)
+
+
 hook.Add("InitPostEntity", "CB_InitCache", function()
+    EntityCache     = {}
+    PlayerCache     = {}
+    EntityCache_Set = {}
+    PlayerCache_Set = {}
+
+    for _, ent in ipairs(_ents_GetAll()) do
+        if IsValid(ent) then
+            AddToEntityCache(ent)
+        end
+    end
+
+    -- Игроков добавляем отдельно на случай если _ents_GetAll их не включает
+    for _, ply in ipairs(_player_GetAll()) do
+        if IsValid(ply) then
+            AddToEntityCache(ply)
+        end
+    end
+
     if CLIENT then
         local_player = LocalPlayer()
         scrh = ScrH()
