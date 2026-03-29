@@ -295,3 +295,169 @@ local function DrawPlayerTag(ply)
 end
  hook.Add("PostPlayerDraw", "GearBox_NameTags", DrawPlayerTag)
  
+local function DrawHUD()
+    if GearBox.GetCvar("gearbox_show_hud") then return end
+    local me = LocalPlayer()
+    if not me:Alive() then return end
+ 
+    local scrW, scrH = ScrW(), ScrH()
+    local activeWep = me:GetActiveWeapon()
+    if activeWep == "Camera" then return end
+ 
+    surface.SetFont("GB_Hud")
+ 
+    -- Броня
+    local hpOffset = 40
+    local armor = me:Armor()
+    if armor > 0 then
+        local armorTxt = "❖" .. armor .. " "
+        local w, h = surface.GetTextSize(armorTxt)
+        hpOffset = 0
+        draw.RoundedBox(10, 0, scrH - 40, w, h, Color(27, 27, 27, 200))
+        draw.SimpleText(armorTxt, "GB_Hud", w * 0.5, scrH - 20, Color(255, 255, 255), 1, 1)
+    end
+ 
+    -- Здоровье
+    local hpTxt = "✙" .. me:Health() .. " "
+    local w, h = surface.GetTextSize(hpTxt)
+    draw.RoundedBox(10, 0, scrH - 80 + hpOffset, w, h, Color(27, 27, 27, 200))
+    draw.SimpleText(hpTxt, "GB_Hud", w * 0.5, scrH - 80 + h * 0.5 + hpOffset, Color(255, 255, 255), 1, 1)
+ 
+    -- Патроны
+    if IsValid(activeWep) and activeWep:GetPrimaryAmmoType() ~= -1 then
+        local clip1 = activeWep:Clip1()
+        local prim  = me:GetAmmoCount(activeWep:GetPrimaryAmmoType())
+        local sec   = me:GetAmmoCount(activeWep:GetSecondaryAmmoType())
+        local ammoTxt
+        if clip1 ~= -1 then
+            ammoTxt = " " .. clip1
+                .. (prim > 0 and " / " .. prim or "")
+                .. (sec  > 0 and " / " .. sec  or "")
+                .. " "
+        else
+            ammoTxt = " "
+                .. (prim > 0 and tostring(prim) or "")
+                .. (sec  > 0 and tostring(sec)  or "")
+                .. " "
+        end
+        local aw, ah = surface.GetTextSize(ammoTxt)
+        draw.RoundedBox(10, scrW - aw, scrH - 40, aw, ah, Color(27, 27, 27, 200))
+        draw.SimpleText(ammoTxt, "GB_Hud", scrW - aw * 0.5, scrH - 20, Color(255, 255, 255), 1, 1)
+    end
+end
+ 
+hook.Add("HUDPaint", "GearBox_HUD", DrawHUD)
+ 
+  
+local hiddenHUD = {
+    CHudHealth        = true,
+    CHudSecondaryAmmo = true,
+    CHudAmmo          = true,
+    CHudBattery       = true,
+}
+ 
+hook.Add("HUDShouldDraw", "GearBox_HideDefaultHUD", function(name)
+	if GearBox.GetCvar("gearbox_show_hud") then return true end
+    if hiddenHUD[name] then return false end
+end)
+ 
+ 
+local xyzWeapons = {
+    ["gmod_tool"]       = true,
+    ["weapon_physgun"]  = true,
+}
+ 
+hook.Add("PostDrawTranslucentRenderables", "GearBox_XYZ", function()
+    if not GearBox.GetCvar("gearbox_prop_xyz") then return end
+    local me = LocalPlayer()
+    if not me:Alive() then return end
+    local wep = me:GetActiveWeapon()
+    if not IsValid(wep) or not xyzWeapons[wep:GetClass()] then return end
+ 
+    local ent = me:GetEyeTrace().Entity
+    if not IsValid(ent) then return end
+    if me:GetPos():Distance(ent:GetPos()) > 500 then return end
+ 
+    local pos = ent:GetPos()
+    local f, r, u = ent:GetForward(), ent:GetRight(), ent:GetUp()
+ 
+    render.DrawLine(pos, pos + f * 25, Color(255, 0, 0),   false)
+    render.DrawLine(pos, pos + r * 25, Color(0, 255, 0),   false)
+    render.DrawLine(pos, pos + u * 25, Color(0, 100, 255), false)
+ 
+    local fs = (pos + f * 30):ToScreen()
+    local rs = (pos + r * 30):ToScreen()
+    local us = (pos + u * 30):ToScreen()
+ 
+    cam.Start2D()
+        draw.SimpleText("X", "GB_PropHud", fs.x, fs.y, Color(255, 0, 0),   0, 0, 1)
+        draw.SimpleText("Y", "GB_PropHud", rs.x, rs.y, Color(0, 255, 0),   0, 0, 1)
+        draw.SimpleText("Z", "GB_PropHud", us.x, us.y, Color(0, 100, 255), 1, 0, 1)
+    cam.End2D()
+end)
+ 
+ 
+-- ======================================================
+-- Инфо о пропе (при наведении с physgun/toolgun)
+-- ======================================================
+ 
+local copyKeys = {
+    KEY_1, KEY_2, KEY_3, KEY_4, KEY_5, KEY_6,
+}
+ 
+local function DrawPropInfo()
+    if not GearBox.GetCvar("gearbox_prop_info") then return end
+    local me = LocalPlayer()
+    if not me:Alive() then return end
+    local wep = me:GetActiveWeapon()
+    if not IsValid(wep) or not xyzWeapons[wep:GetClass()] then return end
+ 
+    local ent = me:GetEyeTrace().Entity
+    if not IsValid(ent) or ent:IsWorld() then return end
+ 
+    local t = {}
+    local offset = 0
+ 
+    if ent:IsPlayer() then
+        t[1] = ent:Name()
+        t[2] = ent:Health()
+        t[3] = ent:GetModel()
+    else
+        local P   = ent:GetPos()
+        local A   = ent:GetAngles()
+        local S   = ent:OBBMaxs()
+        local col = ent:GetColor()
+        local mat = ent:GetMaterial()
+ 
+        t[1] = ent
+        t[2] = ent:GetModel()
+ 
+        if mat == "" then
+            offset = 1
+        else
+            t[3] = mat
+        end
+ 
+        t[4 - offset] = string.format("vec(%s,%s,%s)", math.Round(P[1], 1), math.Round(P[2], 1), math.Round(P[3], 1))
+        t[5 - offset] = string.format("ang(%s,%s,%s)", math.Round(A[1], 1), math.Round(A[2], 1), math.Round(A[3], 1))
+        t[6 - offset] = string.format("vec(%s,%s,%s,%s)", col.r, col.g, col.b, col.a)
+        t[7 - offset] = string.format("vec(%s,%s,%s)", math.Round(S[1], 1), math.Round(S[2], 1), math.Round(S[3], 1))
+    end
+ 
+    for k, v in pairs(t) do
+        local label = string.format("%s | %s", k, v)
+        local y = ScrH() / 2 + k * 25
+        draw.RoundedBox(10, ScrW() - 318, y, 318, 23, Color(25, 25, 25, 200))
+        draw.DrawText(label, "GB_PropHud", ScrW() - 308, y, Color(255, 255, 255), TEXT_ALIGN_LEFT)
+ 
+        if input.IsKeyDown(KEY_LALT) and input.IsKeyDown(copyKeys[k] or 0) then
+            if t[k] ~= nil then
+                draw.DrawText(label, "GB_PropHud", ScrW() - 308, y, Color(0, 255, 0), TEXT_ALIGN_LEFT)
+                SetClipboardText(tostring(t[k]))
+            end
+        end
+    end
+end
+ 
+hook.Add("HUDPaint", "GearBox_PropInfo", DrawPropInfo)
+ 

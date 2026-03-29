@@ -88,35 +88,37 @@ net.Receive("hitmarker_killhit", function()
         0.1   
     )
 end)
-local Otsos = ScrW() / 3
+local Otsos = ScrW()/3
 
-local function getPngFilehttp(link, name)
-    http.Fetch(link, function(body)
-        file.Write('gearbox/' .. name .. '.png', body)
+
+
+local function getPngFilehttp(link,name)
+    http.Fetch(Link,function(_,_,_,b)
+        file.Write(b,'materials/gearbox/'..name..'.png')
     end)
 end
 
+
+
+
+
 local function rmgavno()
-    if not g_SpawnMenu or not IsValid(g_SpawnMenu.CreateMenu) then return end
-    
-    local items = g_SpawnMenu.CreateMenu.Items
-    for i = #items, 1, -1 do 
-        local v = items[i]
-        if v and v.Tab:IsValid() then
-            local txt = v.Tab:GetText()
-            if txt == language.GetPhrase("spawnmenu.category.postprocess") or
-               txt == language.GetPhrase("spawnmenu.category.dupes") or
-               txt == language.GetPhrase("spawnmenu.category.saves") then
-                g_SpawnMenu.CreateMenu:CloseTab(v.Tab, true)
-            end
+     for k, v in pairs( g_SpawnMenu.CreateMenu.Items ) do
+        if (v.Tab:GetText() == language.GetPhrase("spawnmenu.category.postprocess") or
+            v.Tab:GetText() == language.GetPhrase("spawnmenu.category.dupes") or
+            v.Tab:GetText() == language.GetPhrase("spawnmenu.category.saves")) then
+            g_SpawnMenu.CreateMenu:CloseTab( v.Tab, true )
+            rmgavno()
         end
     end
 end
-hook.Add("SpawnMenuOpen", "rmgavno", rmgavno)
+
+hook.Add("SpawnMenuOpen", "rmgavno", rmgavno) 
+
 
 surface.CreateFont("MainMenu", {
-    font = "Roboto",
-    size = 32
+	font = "Roboto",
+	size = 32.5
 })
 
 for _, v in pairs({
@@ -126,8 +128,6 @@ for _, v in pairs({
 }) do
     if not ConVarExists(v) then CreateClientConVar(v, "1", true, false) end
 end
-
-
 /*
 local Obshee = {
 ["Для Всех"] = {
@@ -178,7 +178,7 @@ local CmdK = #Cmd
 local Set = {
 {"gearbox_prop_info","Показывать информацию о пропах"},
 {"gearbox_prop_xyz","Показывать вектора XYZ на пропах"},
-{"gearbox_show_hud","Показывать худ"},
+{"gearbox_show_hud","Стоковый худ"},
 {"gearbox_show_deadnotify","Показывать оповещения смерти игроков"},
 {"gearbox_show_notify","Показывать подсказки(нотификации)"},
 {"gearbox_show_chat_screen","Показывать картинки(ссылки)"},
@@ -212,8 +212,302 @@ end
 
 
 local InfoPanel
+--[[
+spawnmenu.AddCreationTab("GB", function() 
+
+	local Main  = vgui.Create("DPanel")
+    Main:Dock(FILL)
+ 	Main:DockMargin( 5, 0, 5, 0)
+ 	Main.n = 0
+    Main.Paint = function(self,w,h)
+        draw.RoundedBox(0,0,0,w,h,Color(25,25,25,200))
+        surface.SetDrawColor( Color( 0, 255, 255, 255 ) )
+        surface.DrawOutlinedRect( 0, 0, w, h )
+ 	end 
+ 	
+ 	
+ 	local Menus ={
+ 		[0] = function()
+ 		 	local Scroll = vgui.Create( "DScrollPanel", InfoPanel ) 
+			Scroll:Dock( FILL )
+			Scroll.Paint = nil
+ 		end,
+ 		[1] = function()
+ 			local Scroll = vgui.Create( "DScrollPanel", InfoPanel ) 
+			Scroll:Dock( FILL )
+			Scroll.Paint = nil
+				local NwMathClmpInc =function(IN,OUT) 
+				if(IN > OUT) then return IN-1 end
+				return IN
+				 end
+
+				local NwMathClmpDc =function(IN) 
+				if(IN < 0) then return IN+2 end
+				return IN
+				 end
+
+
+
+				for k,v in pairs(Rules) do
+		
+	local R = Scroll:Add( "DButton" ) 
+	R:Dock( TOP )
+	R:SetText("")
+	
+	  R.Lerp = 0
+	  if v=="" then R:SetHeight( 5 ) R.Paint = nil else 
+	  	R:SetHeight( 35 )
+	  R.Paint = function(self,w,h) 
+	  	
+                local H = self:IsHovered()
+                surface.SetFont("GB_PropHude")
+                local WT , HT = surface.GetTextSize(v)
+                local WT = WT*0.5
+                draw.RoundedBox(0,1,1,w-2,h-2,H and Color(0,0,0,200)  or Color(25,25,25,250)  )
+                draw.DrawText( v, "GB_PropHude", R.Lerp ,HT*0.1 , Color( 255, 255, 255, 255 ), TEXT_ALIGN_LEFT  )
+               	
+				 R.Lerp = (H and WT > Otsos ) and NwMathClmpInc(R.Lerp,-WT) or NwMathClmpDc(R.Lerp)
+            end
+        end 
+
+            R.DoClick = function()
+                if(v!="" or "\n" or "") then
+                local Str = string.gsub( v, "^[0-9]%.", "" )
+                chat.AddText(Color(255,255,255),Str)
+                end
+            end
+            
+            
+            
+		
+	end
+
+
+
+ 		end,
+ 	 	[2] = function()
+ 			local Scroll = vgui.Create( "DScrollPanel", InfoPanel ) 
+			Scroll:Dock( FILL )
+			Scroll.Paint = nil
+        for k,v in pairs(Cmd) do
+            local CM = v[1] or ""
+            local OP = v[2] or ""
+            timer.Simple(k*0.05,function()
+
+	            if(k != CmdK) then
+	   	            surface.PlaySound( "gearbox/ui/tick.wav" ) 
+	            else
+	   	            surface.PlaySound( "gearbox/ui/cc.wav" ) 
+	            end
+            
+	            local R = Scroll:Add("DButton")
+	            R:Dock(TOP)
+	            R:SetText("")
+	            R:SetHeight( (CM == "" and 35 or 70 ) )
+        
+	            R.Paint = function(self,w,h) 
+	            local H = self:IsHovered()
+	                surface.SetFont("MainMenu")
+	 
+	                local WT , HT = surface.GetTextSize(OP)
+	                
+	                draw.RoundedBox(8,1,1,w-2,h-2, H and CM != "" and Color(0,0,0,200)   or  (CM == "" and Color(75,75,75,25) or Color(25,25,25,200) )   )
+	                draw.DrawText( CM, "MainMenu", 10, 30, HSVToColor( (k*5) + CurTime()*5 % 360, 1, 1 ), TEXT_ALIGN_LEFT )
+	                draw.DrawText(OP , "MainMenu", 10+WT*0.5 , (CM == "" and 5 or 0 ), Color(255,255,255) , TEXT_ALIGN_CENTER )
+	             
+	            end
+            
+	            R.DoClick = function()
+	            
+	                chat.AddText(HSVToColor( k * CurTime() % 360, 1, 1 ),CM ,Color(255,255,255)," - ",OP)
+	  
+	            end
+    		end)
+        end
+ 
+ 		end,	
+ 		[3] = function()
+
+ 			local Scroll = vgui.Create( "DScrollPanel", InfoPanel ) 
+			Scroll:Dock( FILL )
+			Scroll.Paint = nil
+			local Fix = nil
+
+
+		 		for k,v in pairs(Set) do 
+		 			timer.Simple(k*0.1,function() 
+		 	        if(k != SetK) then
+		   	            surface.PlaySound( "gearbox/ui/tick.wav" ) 
+		            else
+		   	            surface.PlaySound( "gearbox/ui/cc.wav" ) 
+		            end
+
+
+		    local CM = v[1] 
+		    local OP = v[2] 
+		    local Cvar = GetConVar(CM)
+		    local Cvarz = Cvar:GetBool()
+		    local BB = Scroll:Add( "DButton" )
+		    BB:Dock(TOP)
+		    BB:SetHeight( 50 )
+		    BB:SetText("")
+		    BB.tumbler = Cvarz
+		    BB.Paint = function(self,w,h) 
+		        local T = self.tumbler
+		        local TT = T and "on" or "off"
+
+		      draw.RoundedBox(0,2,2,w-4,h-4, T and Color(25,35,25) or Color(35,25,25)   )
+
+		      draw.DrawText(T and OP or "Не "..OP , "MainMenu", 10, 10, Color(255,255,255) ,TEXT_ALIGN_LEFT )
+			  surface.SetDrawColor( T and Color(25,255,25,255) or Color(255,25,25,255) )
+	       		surface.DrawOutlinedRect( 1, 1, w-2, h-2 )      
+		             
+		   	 end
+
+		    BB.DoClick = function(self) 
+
+		            self.tumbler = !self.tumbler 
+		            Cvar:SetBool(self.tumbler)
+		   	         local S = self.tumbler and "on" or "off"
+		            surface.PlaySound( "gearbox/ui/"..S..".wav" ) 
+		            if IsValid(Fix) then return end
+		                Save = Scroll:Add( "DButton" )
+		                Fix = Scroll
+		                Save:Dock(TOP)
+		                Save:SetHeight( 50 )
+		                Save:SetText("")
+		                Save.Paint = function(self,w,h)
+		                     draw.RoundedBox(0,1,1,w-2,h-2, Color(50,90,90) )
+		                     draw.DrawText("Сохранить" , "MainMenu", 10, 10, Color(255,255,255) ,TEXT_ALIGN_LEFT )
+		                	
+		                end
+		                Save.DoClick = function() 
+		                   Save:Remove()
+		                   surface.PlaySound( "gearbox/ui/levelup.wav" ) 
+		                   Saved() 
+		                   Fix = nil
+		                end
+		    end
+		end)
+
+		end
+
+ 		end,
+ 	}
+ 	
+ 	
+ 	
+ 	
+ 	local function Dupdate(p) 
+		 for k,v in pairs(InfoPanel:GetChildren()) do v:Remove() end
+		Menus[p]()
+
+	end
+
+
+	local ComingSoon = Main:Add("DPanel")
+	ComingSoon:Dock(TOP )
+	ComingSoon:SetHeight( 32 )
+	    ComingSoon.Paint = function(self,w,h)
+	    surface.SetFont("MainMenu")
+	    --drawBackGround(0,0,w,h)
+	    draw.RoundedBox(8,1,1,w-2,h-2,Color(25,25,25,150))
+	    local MH = h*0.5
+	    local MW = w*0.5
+	    local T = "GearBox"
+	    local MWT,MHT  =  surface.GetTextSize(T)
+	    draw.DrawText( T ,"MainMenu", 20+MW-MHT*0.5, MH-MHT*0.5, Color( 150, 255, 255, 255 ), TEXT_ALIGN_CENTER )
+	   -- surface.SetDrawColor( Color( 0, 255, 255, 255 ) )
+	end 
+
+	local Buttons = Main:Add("DPanel")
+	    Buttons:Dock(TOP)
+	    Buttons:SetHeight( 35 )
+	    Buttons.Paint = function(self,w,h)
+	        surface.SetDrawColor( Color( 0, 255, 255, 255 ) )
+	        surface.DrawOutlinedRect( 0, 0, w, h )
+	    end
+
+	 	InfoPanel = Main:Add("DPanel")
+	    InfoPanel:Dock(FILL)
+	    InfoPanel.Paint = function(self,w,h)
+	        surface.SetDrawColor( Color( 255, 255, 255, 255 ) )
+	        surface.DrawOutlinedRect( 0, 0, w, h )
+	    end
+
+
+
+		local Buttons1 = Buttons:Add("DButton")
+		table.insert(Buttonss,Buttons1)
+		Buttons1:Dock(LEFT)
+		Buttons1:SetText("Правила")
+		Buttons1:SetTextColor(Color(255,255,255))
+		Buttons1:SetWidth( 200 )
+		Buttons1.open = false
+		Buttons1.Paint = function(self,w,h) 
+		local H = self:IsHovered()
+		    draw.RoundedBox(0,1,1,w-2,h-2,H and Color(25,65,25,150) or Buttons1.open and Color(25,65,65,150) or Color(25,25,25,200)  )
+		     surface.SetDrawColor( Color( 0, 255, 255, 255 ) )
+		    surface.DrawOutlinedRect( 0, 0, w, h )
+		end
+		Buttons1.DoClick = function()
+			for k,v in next,Buttonss do 
+				v.open = false
+			end
+			Buttons1.open = !Buttons1.open
+			Dupdate(Buttons1.open and 1 or 0)
+		end
+
+
+		local Buttons2 = Buttons:Add("DButton")
+		table.insert(Buttonss,Buttons2)
+		Buttons2:Dock(LEFT)
+		Buttons2:SetText("Общее")
+		Buttons2:SetTextColor(Color(255,255,255))
+		Buttons2:SetWidth( 200 )
+		Buttons2.open = false
+		Buttons2.Paint = function(self,w,h) 
+		local H = self:IsHovered()
+		    draw.RoundedBox(0,1,1,w-2,h-2,H and Color(25,65,25,150) or Buttons2.open and Color(25,65,65,150) or Color(25,25,25,200)  )
+		     surface.SetDrawColor( Color( 0, 255, 255, 255 ) )
+		    surface.DrawOutlinedRect( 0, 0, w, h )
+		end
+		Buttons2.DoClick = function()
+			for k,v in next,Buttonss do 
+				v.open = false
+			end
+			Buttons2.open = !Buttons2.open
+			Dupdate(Buttons2.open and 2 or 0)
+		end
+
+
+		local Buttons2 = Buttons:Add("DButton")
+		table.insert(Buttonss,Buttons2)
+		Buttons2:Dock(LEFT)
+		Buttons2:SetText("Настройки")
+		Buttons2:SetTextColor(Color(255,255,255))
+		Buttons2:SetWidth( 200 )
+		Buttons2.open = false
+		Buttons2.Paint = function(self,w,h) 
+		local H = self:IsHovered()
+		    draw.RoundedBox(0,1,1,w-2,h-2,H and Color(25,65,25,150) or Buttons2.open and Color(25,65,65,150) or Color(25,25,25,200)  )
+		     surface.SetDrawColor( Color( 0, 255, 255, 255 ) )
+		    surface.DrawOutlinedRect( 0, 0, w, h )
+		end
+		Buttons2.DoClick = function()
+			for k,v in next,Buttonss do 
+				v.open = false
+			end
+			Buttons2.open = !Buttons2.open
+			Dupdate(Buttons2.open and 3 or 0)
+		end
+		Dupdate(1)
+
+return Main
+end, "materials/gearbox/logo.png", -150 )
+--]]
 spawnmenu.AddCreationTab("GB", function()
-    local Buttonss = {} 
+    local Buttonss = {} -- Локально для каждой сессии создания меню
     local InfoPanel
 
     local Main = vgui.Create("DPanel")
@@ -225,11 +519,13 @@ spawnmenu.AddCreationTab("GB", function()
         surface.DrawOutlinedRect(0, 0, w, h)
     end
 
+    -- Функция обновления контента
     local function Dupdate(p)
         if not IsValid(InfoPanel) then return end
         for _, v in pairs(InfoPanel:GetChildren()) do v:Remove() end
-            
-        if p == 1 then
+        
+        -- Вызываем нужную вкладку
+        if p == 1 then -- ПРАВИЛА
             local Scroll = vgui.Create("DScrollPanel", InfoPanel)
             Scroll:Dock(FILL)
             for _, v in pairs(Rules) do
@@ -248,7 +544,7 @@ spawnmenu.AddCreationTab("GB", function()
                     R.DoClick = function() chat.AddText(Color(255, 255, 255), v) end
                 end
             end
-        elseif p == 2 then 
+        elseif p == 2 then -- ОБЩЕЕ
             local Scroll = vgui.Create("DScrollPanel", InfoPanel)
             Scroll:Dock(FILL)
             for k, v in pairs(Cmd) do
@@ -263,74 +559,76 @@ spawnmenu.AddCreationTab("GB", function()
                     draw.SimpleText(v[1], "DermaDefault", 10, 30, Color(0, 255, 255))
                 end
             end
-elseif p == 3 then
-            local Scroll = vgui.Create("DScrollPanel", InfoPanel)
-            Scroll:Dock(FILL)
-            Scroll.Paint = nil
+        elseif p == 3 then -- НАСТРОЙКИ
+             local Scroll = vgui.Create("DScrollPanel", InfoPanel)
+             Scroll:Dock(FILL)
 
-            local Fix = nil -
+			Scroll.Paint = nil
+			local Fix = nil
 
-            for k, v in pairs(Set) do
- 
-                timer.Simple(k * 0.1, function()
 
-                    if not IsValid(Scroll) then return end
+		 		for k,v in pairs(Set) do 
+		 			timer.Simple(k*0.1,function() 
+		 	        if(k != SetK) then
+		   	            surface.PlaySound( "gearbox/ui/tick.wav" ) 
+		            else
+		   	            surface.PlaySound( "gearbox/ui/cc.wav" ) 
+		            end
 
-                    if (k != SetK) then
-                        surface.PlaySound("gearbox/ui/tick.wav")
-                    else
-                        surface.PlaySound("gearbox/ui/cc.wav")
-                    end
 
-                    local CM = v[1]
-                    local OP = v[2]
-                    local Cvar = GetConVar(CM)
-                    if not Cvar then return end 
+		    local CM = v[1] 
+		    local OP = v[2] 
+		    local Cvar = GetConVar(CM)
+		    local Cvarz = Cvar:GetBool()
+		    local BB = Scroll:Add( "DButton" )
+		    BB:Dock(TOP)
+		    BB:SetHeight( 50 )
+		    BB:SetText("")
+		    BB.tumbler = Cvarz
+		    BB.Paint = function(self,w,h) 
+		        local T = self.tumbler
+		        local TT = T and "on" or "off"
 
-                    local BB = Scroll:Add("DButton")
-                    BB:Dock(TOP)
-                    BB:SetHeight(50)
-                    BB:SetText("")
-                    BB.tumbler = Cvar:GetBool()
+		      draw.RoundedBox(0,2,2,w-4,h-4, T and Color(25,35,25) or Color(35,25,25)   )
 
-                    BB.Paint = function(self, w, h)
-                        local T = self.tumbler
-                        draw.RoundedBox(0, 2, 2, w - 4, h - 4, T and Color(25, 35, 25) or Color(35, 25, 25))
-                        draw.DrawText(T and OP or "Не " .. OP, "MainMenu", 10, 10, Color(255, 255, 255), TEXT_ALIGN_LEFT)
-                        surface.SetDrawColor(T and Color(25, 255, 25, 255) or Color(255, 25, 25, 255))
-                        surface.DrawOutlinedRect(1, 1, w - 2, h - 2)
-                    end
+		      draw.DrawText(T and OP or "Не "..OP , "MainMenu", 10, 10, Color(255,255,255) ,TEXT_ALIGN_LEFT )
+			  surface.SetDrawColor( T and Color(25,255,25,255) or Color(255,25,25,255) )
+	       		surface.DrawOutlinedRect( 1, 1, w-2, h-2 )      
+		             
+		   	 end
 
-                    BB.DoClick = function(self)
-                        self.tumbler = !self.tumbler
-                        Cvar:SetBool(self.tumbler)
-                        local S = self.tumbler and "on" or "off"
-                        surface.PlaySound("gearbox/ui/" .. S .. ".wav")
+		    BB.DoClick = function(self) 
 
-                        -- Если кнопки сохранения еще нет, создаем её
-                        if IsValid(Fix) then return end
-                        
-                        local SaveBtn = Scroll:Add("DButton")
-                        Fix = SaveBtn -- Запоминаем, что кнопка создана
-                        SaveBtn:Dock(TOP)
-                        SaveBtn:SetHeight(50)
-                        SaveBtn:SetText("")
-                        SaveBtn.Paint = function(self, w, h)
-                            draw.RoundedBox(0, 1, 1, w - 2, h - 2, Color(50, 90, 90))
-                            draw.DrawText("Сохранить", "MainMenu", 10, 10, Color(255, 255, 255), TEXT_ALIGN_LEFT)
-                        end
-                        SaveBtn.DoClick = function()
-                            SaveBtn:Remove()
-                            surface.PlaySound("gearbox/ui/levelup.wav")
-                            Saved()
-                            Fix = nil
-                        end
-                    end
-                end)
-            end
-        end 
-    end 
+		            self.tumbler = !self.tumbler 
+		            Cvar:SetBool(self.tumbler)
+		   	         local S = self.tumbler and "on" or "off"
+		            surface.PlaySound( "gearbox/ui/"..S..".wav" ) 
+		            if IsValid(Fix) then return end
+		                Save = Scroll:Add( "DButton" )
+		                Fix = Scroll
+		                Save:Dock(TOP)
+		                Save:SetHeight( 50 )
+		                Save:SetText("")
+		                Save.Paint = function(self,w,h)
+		                     draw.RoundedBox(0,1,1,w-2,h-2, Color(50,90,90) )
+		                     draw.DrawText("Сохранить" , "MainMenu", 10, 10, Color(255,255,255) ,TEXT_ALIGN_LEFT )
+		                	
+		                end
+		                Save.DoClick = function() 
+		                   Save:Remove()
+		                   surface.PlaySound( "gearbox/ui/levelup.wav" ) 
+		                   Saved() 
+		                   Fix = nil
+		                end
+		    end
+		end)
 
+		end
+
+        end
+    end
+
+    -- Шапка
     local Header = Main:Add("DPanel")
     Header:Dock(TOP)
     Header:SetHeight(40)
@@ -338,10 +636,12 @@ elseif p == 3 then
         draw.SimpleText("GearBox", "MainMenu", w/2, h/2, Color(0, 255, 255), 1, 1)
     end
 
+    -- Панель кнопок
     local BtnBar = Main:Add("DPanel")
     BtnBar:Dock(TOP)
     BtnBar:SetHeight(35)
 
+    -- Сама панель контента
     InfoPanel = Main:Add("DPanel")
     InfoPanel:Dock(FILL)
     InfoPanel.Paint = function(self, w, h)
@@ -349,6 +649,7 @@ elseif p == 3 then
         surface.DrawOutlinedRect(0, 0, w, h)
     end
 
+    -- Создание вкладок
     local tabs = { { "Правила", 1 }, { "Общее", 2 }, { "Настройки", 3 } }
     for _, data in ipairs(tabs) do
         local b = BtnBar:Add("DButton")
@@ -361,6 +662,6 @@ elseif p == 3 then
         end
     end
 
-    Dupdate(1) 
+    Dupdate(1) -- Открываем первую вкладку по умолчанию
     return Main
 end, "icon16/cog.png")

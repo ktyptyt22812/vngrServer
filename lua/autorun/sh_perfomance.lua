@@ -1,5 +1,4 @@
--- EntityCache/PlayerCache — массивы (sequential), совместимы с ipairs, #, pairs
--- EntityCache_Set/PlayerCache_Set — словари для быстрой проверки наличия (O(1))
+
 local EntityCache     = {}
 local PlayerCache     = {}
 local EntityCache_Set = {}
@@ -300,9 +299,6 @@ function ENTITY:IsWorld()
     return t.world_validated
 end
 
--- ENTITY/PLAYER/WEAPON __index удалены — вызывали stack overflow.
--- self:GetTable() внутри __index снова триггерит __index → бесконечная рекурсия.
-
 local _PLY_UniqueID = PLAYER.UniqueID
 function PLAYER:UniqueID()
     local t = self:GetTable()
@@ -361,11 +357,6 @@ function PLAYER:PlayerTick()
 end
 
 
--- ======================================================
--- Кэш сущностей и игроков
--- EntityCache / PlayerCache     — массивы, совместимы с ipairs, #, pairs
--- EntityCache_Set / PlayerCache_Set — словари для O(1) проверки наличия
--- ======================================================
 
 local _player_GetAll = player.GetAll
 local _ents_GetAll   = ents.GetAll
@@ -410,7 +401,6 @@ player.GetAll = function()
     return PlayerCache
 end
 
--- player.Iterator возвращает ipairs-совместимый итератор
 player.Iterator = function()
     return ipairs(PlayerCache)
 end
@@ -425,7 +415,7 @@ end
 
 
 hook.Add("OnEntityCreated", "CB_AddEntityCache", function(ent)
-    -- Ждём следующий тик — сущность может ещё не быть полностью инициализирована
+
     timer.Simple(0, function()
         if IsValid(ent) then
             AddToEntityCache(ent)
@@ -454,7 +444,6 @@ hook.Add("InitPostEntity", "CB_InitCache", function()
         end
     end
 
-    -- Игроков добавляем отдельно на случай если _ents_GetAll их не включает
     for _, ply in ipairs(_player_GetAll()) do
         if IsValid(ply) then
             AddToEntityCache(ply)
