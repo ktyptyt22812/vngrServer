@@ -184,6 +184,7 @@ local Set = {
 {"gearbox_show_chat_screen","Показывать картинки(ссылки)"},
 {"gearbox_load_addons","Загружать аддоны при спавне"},
 {"gearbox_disconnect_animation","Показывать анимацию выхода игрока"},
+{"vngr_style","Поменять стиль"},
 }
 local SetK = #Set
 
@@ -507,25 +508,23 @@ return Main
 end, "materials/gearbox/logo.png", -150 )
 --]]
 spawnmenu.AddCreationTab("GB", function()
-    local Buttonss = {} -- Локально для каждой сессии создания меню
+    local Buttonss = {} 
     local InfoPanel
 
     local Main = vgui.Create("DPanel")
     Main:Dock(FILL)
     Main:DockMargin(5, 0, 5, 0)
     Main.Paint = function(self, w, h)
-        draw.RoundedBox(0, 0, 0, w, h, Color(25, 25, 25, 200))
+        draw.RoundedBox(0, 0, 0, w, h, VNGR.color.BG)
         surface.SetDrawColor(0, 255, 255, 255)
         surface.DrawOutlinedRect(0, 0, w, h)
     end
 
-    -- Функция обновления контента
     local function Dupdate(p)
         if not IsValid(InfoPanel) then return end
         for _, v in pairs(InfoPanel:GetChildren()) do v:Remove() end
         
-        -- Вызываем нужную вкладку
-        if p == 1 then -- ПРАВИЛА
+        if p == 1 then 
             local Scroll = vgui.Create("DScrollPanel", InfoPanel)
             Scroll:Dock(FILL)
             for _, v in pairs(Rules) do
@@ -544,7 +543,7 @@ spawnmenu.AddCreationTab("GB", function()
                     R.DoClick = function() chat.AddText(Color(255, 255, 255), v) end
                 end
             end
-        elseif p == 2 then -- ОБЩЕЕ
+        elseif p == 2 then 
             local Scroll = vgui.Create("DScrollPanel", InfoPanel)
             Scroll:Dock(FILL)
             for k, v in pairs(Cmd) do
@@ -559,7 +558,7 @@ spawnmenu.AddCreationTab("GB", function()
                     draw.SimpleText(v[1], "DermaDefault", 10, 30, Color(0, 255, 255))
                 end
             end
-        elseif p == 3 then -- НАСТРОЙКИ
+        elseif p == 3 then 
              local Scroll = vgui.Create("DScrollPanel", InfoPanel)
              Scroll:Dock(FILL)
 
@@ -628,20 +627,17 @@ spawnmenu.AddCreationTab("GB", function()
         end
     end
 
-    -- Шапка
     local Header = Main:Add("DPanel")
     Header:Dock(TOP)
     Header:SetHeight(40)
     Header.Paint = function(self, w, h)
-        draw.SimpleText("GearBox", "MainMenu", w/2, h/2, Color(0, 255, 255), 1, 1)
+        draw.SimpleText(GearBox.Naming, "MainMenu", w/2, h/2, Color(0, 255, 255), 1, 1)
     end
 
-    -- Панель кнопок
     local BtnBar = Main:Add("DPanel")
     BtnBar:Dock(TOP)
     BtnBar:SetHeight(35)
 
-    -- Сама панель контента
     InfoPanel = Main:Add("DPanel")
     InfoPanel:Dock(FILL)
     InfoPanel.Paint = function(self, w, h)
@@ -649,7 +645,6 @@ spawnmenu.AddCreationTab("GB", function()
         surface.DrawOutlinedRect(0, 0, w, h)
     end
 
-    -- Создание вкладок
     local tabs = { { "Правила", 1 }, { "Общее", 2 }, { "Настройки", 3 } }
     for _, data in ipairs(tabs) do
         local b = BtnBar:Add("DButton")
@@ -662,6 +657,6 @@ spawnmenu.AddCreationTab("GB", function()
         end
     end
 
-    Dupdate(1) -- Открываем первую вкладку по умолчанию
+    Dupdate(1) 
     return Main
 end, "icon16/cog.png")

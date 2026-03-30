@@ -1225,7 +1225,7 @@ hook.Add("HUDPaint", "DrawServerGraph", function()
     if anim < 0.01 then return end
 
 
-	local strDisplayText = "6.2.5KE"
+	local strDisplayText = "ver"
 	draw.RoundedBox(0, x + 114, y - 12, 75, 15, Color(0,0,0, 90))
     draw.SimpleText(strDisplayText, "Trebuchet18", x + w/2, y - 15, Color(255,255,255), TEXT_ALIGN_CENTER)
 	return

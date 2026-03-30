@@ -1,19 +1,20 @@
 
 
 local Wl = {
-    ["76561198079226909"] = true, 
+    ["76561198079226909"] = true,
 }
 
 hook.Add("CheckPassword", "vngrCheckPassword", function(SteamID64, IP, ServerPass, ClientPass, ClientName)
     if not Wl[SteamID64] then
-        RunConsoleCommand('say', ClientName .. " / " .. SteamID64)
-        return false, 'Тех работы'
+        RunConsoleCommand("say", ClientName .. " / " .. SteamID64)
+        return false, "Тех работы"
     end
 end)
 
 timer.Simple(1, function()
     hook.Remove("CheckPassword", "vngrCheckPassword")
 end)
+
 
 
 timer.Simple(15, function()
@@ -27,15 +28,13 @@ timer.Simple(15, function()
     end
 end)
 
-RunConsoleCommand('wire_holograms_max', 200)
-RunConsoleCommand('sbox_maxfin_2', 9999)
-
+RunConsoleCommand("wire_holograms_max", 200)
+RunConsoleCommand("sbox_maxfin_2", 9999)
 
 
 hook.Add("GetFallDamage", "AIBOLNO", function(ply, speed)
     ply:EmitSound("ouch")
 end)
-
 
 local function buildnotify(...)
     local Ar = {...}
@@ -57,8 +56,6 @@ local IndexFalse = {
     [0] = true,
 }
 
-
-
 local function frezze()
     for _, v in ipairs(ents.GetAll()) do
         local phys = v:GetPhysicsObject()
@@ -76,15 +73,6 @@ local function frezzelist()
         if IsValid(phys) then
             phys:EnableMotion(false)
         end
-    end
-end
-
-local function e2Stop()
-    for _, v in ipairs(ents.FindByClass("gmod_wire_expression2")) do
-        v.error = true
-        v:PCallHook("destruct")
-        v:ResetContext()
-        v:PCallHook("construct")
     end
 end
 
@@ -119,15 +107,16 @@ local function ClearLuaMemory()
         local after = collectgarbage("count")
         local freed = math.Round((before - after) / 1024)
         buildnotify(
-            Color(0, 0, 0),   "► ",
+            Color(0, 0, 0),       "► ",
             Color(200, 200, 200), "Удалено ",
             Color(255, 255, 255), tostring(freed),
             Color(200, 200, 200), " MB текущей Lua сессии."
         )
     end
 end
+
 local function destroued()
-    RunConsoleCommand('gmod_admin_cleanup')
+    RunConsoleCommand("gmod_admin_cleanup")
 end
 
 local function destrouedd()
@@ -138,7 +127,6 @@ local function destrouedd()
     end
 end
 
-
 util.AddNetworkString("Lag")
 util.AddNetworkString("lages")
 util.AddNetworkString("BuildN")
@@ -147,7 +135,7 @@ local lastSysCurrDiff = 9999
 
 local function GetCurrentDelta()
     local SysCurrDiff = SysTime() - CurTime()
-    local delta = SysCurrDiff - lastSysCurrDiff  
+    local delta = SysCurrDiff - lastSysCurrDiff
     lastSysCurrDiff = SysCurrDiff
     return delta
 end
@@ -173,7 +161,7 @@ local Lag = {
         frezzelist()
         ClearLuaMemory()
         buildnotify(
-            Color(0, 0, 0),   "► ",
+            Color(0, 0, 0),       "► ",
             Color(200, 200, 200), "Обнаружены лаги ",
             Color(255, 255, 255), "0",
             Color(200, 200, 200), " все пропы заморожены."
@@ -184,11 +172,11 @@ local Lag = {
         frezzelist()
         ClearLuaMemory()
         buildnotify(
-            Color(0, 0, 0),   "► ",
+            Color(0, 0, 0),       "► ",
             Color(200, 200, 200), "Обнаружены лаги ",
-            Color(0, 255, 0),  "1",
+            Color(0, 255, 0),     "1",
             Color(200, 200, 200), " все пропы заморожены, время замедлилось на ",
-            Color(0, 200, 0),  "20%."
+            Color(0, 200, 0),     "20%."
         )
         if akychLib and akychLib.vk then
             akychLib.vk.vkAddMessage("[GB_lag]► Сервер лагает [Easy]")
@@ -200,11 +188,11 @@ local Lag = {
         e2Stoplist()
         frezzelist()
         buildnotify(
-            Color(0, 0, 0),   "► ",
+            Color(0, 0, 0),       "► ",
             Color(200, 200, 200), "Лаги не были устранены ",
-            Color(255, 255, 0), "2",
+            Color(255, 255, 0),   "2",
             Color(200, 200, 200), " все пропы заморожены, E2 остановлены, время замедлилось на ",
-            Color(200, 200, 0), "40%."
+            Color(200, 200, 0),   "40%."
         )
         if akychLib and akychLib.vk then
             akychLib.vk.vkAddMessage("[GB_lag]► Сервер лагает [Medium]")
@@ -217,11 +205,11 @@ local Lag = {
         e2Stopram()
         frezze()
         buildnotify(
-            Color(0, 0, 0),   "► ",
+            Color(0, 0, 0),       "► ",
             Color(200, 200, 200), "Лаги не были устранены ",
-            Color(255, 0, 0),  "3",
+            Color(255, 0, 0),     "3",
             Color(200, 200, 200), " выборочный CleanUP, все пропы заморожены, E2 остановлены, время замедлилось на ",
-            Color(200, 0, 0),  "60%."
+            Color(200, 0, 0),     "60%."
         )
         if akychLib and akychLib.vk then
             akychLib.vk.vkAddMessage("[GB_lag]► Сервер лагает [Hard]")
@@ -233,9 +221,9 @@ local Lag = {
         destroued()
         game.SetTimeScale(1)
         buildnotify(
-            Color(0, 0, 0),    "► ",
+            Color(0, 0, 0),       "► ",
             Color(200, 200, 200), "Кажись серв помирает ",
-            Color(255, 0, 255), "4  общий CleanUP"
+            Color(255, 0, 255),   "4  общий CleanUP"
         )
         if akychLib and akychLib.vk then
             akychLib.vk.vkAddMessage("[GB_lag]► Сервер лагает [Ultra Hard]")
@@ -244,14 +232,15 @@ local Lag = {
 }
 
 local function unlages()
-    timer.Create("vngrUnlag", 4 * laglevel, 1, function()  
+    timer.Create("vngrUnlag", 4 * laglevel, 1, function()
         if laglevel < 1 then return end
         laglevel = laglevel - 1
 
         local g = 255
         if laglevel > 0 then g = math.floor(255 / laglevel) end
+
         buildnotify(
-            Color(0, 0, 0),  "► ",
+            Color(0, 0, 0),       "► ",
             Color(200, 200, 200), "Уровень лагов сброшен до ",
             Color(85 * laglevel, g, 0), tostring(laglevel)
         )
@@ -261,7 +250,6 @@ local function unlages()
         end
     end)
 end
-
 
 
 local Testos = CurTime()
@@ -287,7 +275,7 @@ hook.Add("Think", "antelag", function()
     end
 end)
 
-timer.Create("vngrLagReport", 10, 0, function()  
+timer.Create("vngrLagReport", 10, 0, function()
     sendLags(GetCurrentDelta())
 end)
 
@@ -296,45 +284,155 @@ end)
 akychLib = akychLib or {}
 akychLib.suka = akychLib.suka or {}
 
+local physLagCounter = {}
+
+local LAG_COUNT_THRESHOLD = 3
+local LAG_WINDOW          = 10  
+
+local function freezeAndDetach(ent)
+    if not IsValid(ent) then return end
+    if not Classes[ent:GetClass()] then return end
+
+    local owner = ent:CPPIGetOwner()
+    if IsValid(owner) and owner.whiteList then return end
+
+    local phys = ent:GetPhysicsObject()
+    if IsValid(phys) then
+        phys:EnableMotion(false)  
+    end
+    ent:SetCollisionGroup(COLLISION_GROUP_DEBRIS) 
+
+    physLagCounter[ent] = nil 
+
+    if IsValid(owner) then
+        if akychLib.suka.tpAdmin then
+            akychLib.suka.tpAdmin(owner)
+        end
+        buildnotify(
+            Color(0, 0, 0),       "► ",
+            Color(200, 200, 200), "[" .. ent:EntIndex() .. "][" .. ent:GetClass() .. "] ",
+            team.GetColor(owner:Team()), owner:Name(),
+            Color(200, 200, 200), " заморожен и сделан неосязаемым: вызывал лаг физики."
+        )
+    else
+        buildnotify(
+            Color(0, 0, 0),       "► ",
+            Color(200, 200, 200), "[" .. ent:EntIndex() .. "][" .. ent:GetClass() .. "] ",
+            Color(200, 200, 200), " заморожен и сделан неосязаемым: вызывал лаг физики."
+        )
+    end
+end
+
+local function trackPhysLagEnt(ent)
+    if not IsValid(ent) then return end
+    if not Classes[ent:GetClass()] then return end
+
+    local now = CurTime()
+    local data = physLagCounter[ent]
+
+    if not data or (now - data.lastSeen) > LAG_WINDOW then
+        physLagCounter[ent] = { count = 1, lastSeen = now }
+        return
+    end
+
+    data.count    = data.count + 1
+    data.lastSeen = now
+
+    if data.count >= LAG_COUNT_THRESHOLD then
+        freezeAndDetach(ent)
+    end
+end
+if HolyLib then
+
+
+    hook.Add("HolyLib:OnPhysicsLag", "vngrPhysLagDetect", function(callerFunction, recalcPhys, phys1, phys2)
+
+        local ent1 = (phys1 and phys1.IsValid and phys1:IsValid()) and phys1:GetEntity() or nil
+        local ent2 = (phys2 and phys2.IsValid and phys2:IsValid()) and phys2:GetEntity() or nil
+
+        if ent1 and ent1:IsValid() then trackPhysLagEnt(ent1) end
+        if ent2 and ent2:IsValid() then trackPhysLagEnt(ent2) end
+
+        if laglevel and laglevel >= 3 then
+            return physenv.IVP_SkipSimulation
+        elseif laglevel and laglevel >= 1 then
+            return physenv.IVP_SkipImpacts
+        end
+    end)
+
+    MsgC(Color(0, 255, 100), "HolyLib:OnPhysicsLag\n")
+else
+    MsgC(Color(255, 200, 0), "Fallback EntityTakeDamage\n")
+
+    local crushCounter = {}
+    hook.Add("EntityTakeDamage", "vngrCollisionDetect", function(ent, dmginfo)
+        if not IsValid(ent) or not dmginfo then return end
+        if dmginfo:GetDamageType() ~= DMG_CRUSH then return end
+        if not Classes or not Classes[ent:GetClass()] then return end
+
+        local owner = ent:CPPIGetOwner()
+        if IsValid(owner) and owner.whiteList then return end
+
+        local now = CurTime()
+        local data = crushCounter[ent]
+
+        if not data or (now - data.lastReset) > 5 then
+            crushCounter[ent] = { count = 1, lastReset = now }
+            return
+        end
+
+        data.count = data.count + 1
+        if data.count >= 10 then
+            if freezeAndDetach then freezeAndDetach(ent) end
+            crushCounter[ent] = nil
+        end
+    end)
+end
+
 akychLib.suka.lagforce = function(vCorner1, vCorner2)
     local tEntities = ents.FindInBox(vCorner1, vCorner2)
-    local tPlayers = {}
-    local iPlayers = 0
+    local foundEnts = {}
+    local count = 0
+    
     for i = 1, #tEntities do
-        local P = tEntities[i]
-        if Classes[P:GetClass()] and IndexFalse[P:GetCollisionGroup()] then
-            iPlayers = iPlayers + 1
-            tPlayers[iPlayers] = P
+        local p = tEntities[i]
+        if IsValid(p) and Classes[p:GetClass()] and IndexFalse[p:GetCollisionGroup()] then
+            count = count + 1
+            foundEnts[count] = p
         end
     end
-    return tPlayers, iPlayers
+    return foundEnts, count
 end
 
 hook.Add("OnEntityCreated", "SoftEntList", function(ent)
+    if not IsValid(ent) then return end
     ent.crushTime = 0
-    if not Classes[ent:GetClass()] then return end
-
+    
     timer.Simple(0.1, function()
-
         if not IsValid(ent) then return end
-        if not IsValid(ent:CPPIGetOwner()) then return end
-        if ent:CPPIGetOwner().whiteList then return end
+        
+        local owner = ent:CPPIGetOwner()
+        if not IsValid(owner) or (owner.whiteList) then return end
+        if not Classes[ent:GetClass()] then return end
 
         local maxs = ent:LocalToWorld(ent:OBBMaxs() * 0.8)
         local mins = ent:LocalToWorld(ent:OBBMins() * 0.8)
         local Arr, C = akychLib.suka.lagforce(maxs, mins)
 
         if C > 15 then
-            local owner = ent:CPPIGetOwner()
-            if IsValid(owner) then
-                akychLib.suka.tpAdmin(owner)
+            if akychLib.suka.tpAdmin then akychLib.suka.tpAdmin(owner) end
+            
+            if buildnotify then
                 buildnotify(
-                    Color(0, 0, 0),   "► ",
+                    Color(0, 0, 0), "► ",
                     Color(200, 200, 200), "[" .. ent:EntIndex() .. "][" .. ent:GetClass() .. "] ",
                     team.GetColor(owner:Team()), owner:Name(),
                     Color(200, 200, 200), string.format(" замечены (%s) стакнутых предметов.", C)
                 )
-                for _, vv in ipairs(Arr) do
+            end
+
+            for _, vv in ipairs(Arr) do
+                if IsValid(vv) then 
                     vv:SetCollisionGroup(COLLISION_GROUP_DEBRIS)
                     local phys = vv:GetPhysicsObject()
                     if IsValid(phys) then
@@ -346,44 +444,7 @@ hook.Add("OnEntityCreated", "SoftEntList", function(ent)
     end)
 end)
 
-
-local function PlayerHit(ent, inflictor, attacker, amount, dmginfo)
-    if not IsValid(ent) then return end
-    if inflictor:GetDamageType() ~= 1 then return end
-
-    local timerName = "_" .. ent:EntIndex()
-    timer.Create(timerName, 5, 1, function()
-        if IsValid(ent) then ent.crushTime = 0 end
-    end)
-
-    ent.crushTime = (ent.crushTime or 0) + 0.1
-
-    if ent.crushTime > 10 then
-        if timer.Exists(timerName) then timer.Remove(timerName) end
-        ent.crushTime = 0
-
-        local owner = ent:CPPIGetOwner()
-        if IsValid(owner) then
-            akychLib.suka.tpAdmin(owner)
-            buildnotify(
-                Color(0, 0, 0),   "► ",
-                Color(200, 200, 200), "[" .. ent:EntIndex() .. "][" .. ent:GetClass() .. "] ",
-                team.GetColor(owner:Team()), owner:Name(),
-                Color(200, 200, 200), " заморожен из-за большого количества столкновений."
-            )
-        end
-
-        local phys = ent:GetPhysicsObject()
-        if IsValid(phys) then
-            phys:EnableMotion(false)
-        end
-    end
-end
-
-hook.Add("EntityTakeDamage", "PlayerHit", PlayerHit)
-
-
-
+--[[
 timer.Simple(10, function()
     hook.Add("PlayerSpawnedSWEP", "vngrFreezeSWEP", function(ply, ent)
         timer.Simple(0, function()
@@ -395,4 +456,15 @@ timer.Simple(10, function()
             end
         end)
     end)
+end)
+
+--]]
+
+
+timer.Create("vngrPhysLagGC", 30, 0, function()
+    for ent in pairs(physLagCounter) do
+        if not IsValid(ent) then
+            physLagCounter[ent] = nil
+        end
+    end
 end)

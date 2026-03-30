@@ -79,7 +79,9 @@ surface.CreateFont("GB_NameHead", {
     font = "Roboto",
     size = 50
 })
- 
+VNGR = VNGR or {}
+VNGR.color = VNGR.color or {}
+
 hook.Remove("PlayerTick", "TickWidgets")
 hook.Add("OnEntityCreated", "WidgetInit", function(ent)
     if ent:IsWidget() then
@@ -107,6 +109,7 @@ local cvarList = {
     "gearbox_show_chat_screen",
     "gearbox_load_addons",
     "gearbox_disconnect_animation",
+	"vngr_style",
 }
  
 local function CvarRebuild()
@@ -143,28 +146,58 @@ local function CvarRead()
         MsgC("Initialize cvar ", Color(0, 255, 255), name, "  ", Color(255, v * 255, 255), tostring(v), "\n")
     end
 end
- 
+local Colors = {
+	[NOTIFY_GENERIC] = Color(0, 255, 0, 255),
+	[NOTIFY_ERROR]   = Color(255, 100, 100, 255),
+	[NOTIFY_UNDO]    = Color(255, 255, 255, 255),
+	[NOTIFY_HINT]    = Color(0, 255, 255, 255),
+	[NOTIFY_CLEANUP] = Color(255, 255, 0, 255),
+}
+local ScreenPos = ScrH() - 150
+local Notifications = {}
+
+smoothcubes = 10
+GearBox.Naming = "GearBox"
+VNGR.color.accent = Color(255, 255, 255)
+VNGR.color.BG = Color(20, 20, 20, 29)
+VNGR.color.TEXT1 = Color(255, 255, 255)
+VNGR.color.TEXT2 = Color(255, 255, 255)
+local function UpdateStyle(newVal)
+    local val = tonumber(newVal) or 0
+    if val == 0 then 
+        smoothcubes = 10
+        GearBox.Naming = "GearBox"
+		VNGR.color.accent = Color(0, 255, 255)
+		VNGR.color.BG = Color(0, 0, 0, 200)
+		VNGR.color.TEXT1 = Color(255, 255, 255)
+    else 
+        smoothcubes = 0
+        GearBox.Naming = "VanguardR"
+		VNGR.color.accent = Color(255, 255, 255)
+		VNGR.color.BG = Color(25, 25, 25, 200)
+		VNGR.color.TEXT1 = Color(255, 255, 255)
+		VNGR.color.TEXT2 = Color(255, 255, 255)
+    end
+	RunConsoleCommand("spawnmenu_reload")
+    MsgC(VNGR.color.accent, "VNGR: ", Color(255, 255, 255), "Style updated to: " .. GearBox.Naming .. "\n")
+end
 if not file.Exists("gearbox/settings.txt", "DATA") then
     CvarRebuild()
 else
     CvarRead()
 end
  
- 
- 
-local ScreenPos = ScrH() - 150
-local Notifications = {}
- 
-local Colors = {
-    [NOTIFY_GENERIC] = Color(0, 255, 0, 255),
-    [NOTIFY_ERROR]   = Color(255, 100, 100, 255),
-    [NOTIFY_UNDO]    = Color(255, 255, 255, 255),
-    [NOTIFY_HINT]    = Color(0, 255, 255, 255),
-    [NOTIFY_CLEANUP] = Color(255, 255, 0, 255),
-}
- 
+
+
+cvars.AddChangeCallback("vngr_style", function(name, old, new)
+    UpdateStyle(new)
+end)
+
+timer.Simple(0, function()
+    UpdateStyle(GetConVar("vngr_style"):GetInt())
+end)
 local function DrawNotification(x, y, w, h, text, col)
-    draw.RoundedBox(10, x + h, y, w - h, h, Color(27, 27, 27, 200))
+    draw.RoundedBox(smoothcubes, x + h, y, w - h, h, Color(27, 27, 27, 200))
     draw.SimpleText(text, "GB_PropHud", x + h + 10, y + h * 0.5, col, 0, 1)
 end
  
@@ -313,14 +346,14 @@ local function DrawHUD()
         local armorTxt = "❖" .. armor .. " "
         local w, h = surface.GetTextSize(armorTxt)
         hpOffset = 0
-        draw.RoundedBox(10, 0, scrH - 40, w, h, Color(27, 27, 27, 200))
+        draw.RoundedBox(smoothcubes, 0, scrH - 40, w, h, Color(27, 27, 27, 200))
         draw.SimpleText(armorTxt, "GB_Hud", w * 0.5, scrH - 20, Color(255, 255, 255), 1, 1)
     end
  
     -- Здоровье
     local hpTxt = "✙" .. me:Health() .. " "
     local w, h = surface.GetTextSize(hpTxt)
-    draw.RoundedBox(10, 0, scrH - 80 + hpOffset, w, h, Color(27, 27, 27, 200))
+    draw.RoundedBox(smoothcubes, 0, scrH - 80 + hpOffset, w, h, Color(27, 27, 27, 200))
     draw.SimpleText(hpTxt, "GB_Hud", w * 0.5, scrH - 80 + h * 0.5 + hpOffset, Color(255, 255, 255), 1, 1)
  
     -- Патроны
@@ -341,7 +374,7 @@ local function DrawHUD()
                 .. " "
         end
         local aw, ah = surface.GetTextSize(ammoTxt)
-        draw.RoundedBox(10, scrW - aw, scrH - 40, aw, ah, Color(27, 27, 27, 200))
+        draw.RoundedBox(smoothcubes, scrW - aw, scrH - 40, aw, ah, Color(27, 27, 27, 200))
         draw.SimpleText(ammoTxt, "GB_Hud", scrW - aw * 0.5, scrH - 20, Color(255, 255, 255), 1, 1)
     end
 end
@@ -397,10 +430,7 @@ hook.Add("PostDrawTranslucentRenderables", "GearBox_XYZ", function()
 end)
  
  
--- ======================================================
--- Инфо о пропе (при наведении с physgun/toolgun)
--- ======================================================
- 
+
 local copyKeys = {
     KEY_1, KEY_2, KEY_3, KEY_4, KEY_5, KEY_6,
 }
