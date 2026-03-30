@@ -16,8 +16,8 @@ from datetime import datetime
 z9=os.environ.get('DISABLE_DISCORD','false').lower()=='true'
 if z9:
  print("ds func disabled")
-t1="MTI1OTU0MzMzMDUxNDE0MTIxNw.GNPe5m.wZ0Dgj-ihSw5QjkAghUKcycwqg-xV0U4AouA0Q"
-t2="8291832158:AAH5yYbGguzLYih0dLIMoVZf7ivEbTbX-c4"
+t1="=" # 123
+t2="=" # 123
 g1="192.168.31.116"
 g2=12350
 g3=12351
