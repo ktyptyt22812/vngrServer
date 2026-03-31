@@ -1,4 +1,4 @@
-
+--[[ this script wasn't work
 local EntityCache     = {}
 local PlayerCache     = {}
 local EntityCache_Set = {}
@@ -457,3 +457,4 @@ hook.Add("InitPostEntity", "CB_InitCache", function()
     end
     gm_cache = gmod.GetGamemode()
 end)
+]]
