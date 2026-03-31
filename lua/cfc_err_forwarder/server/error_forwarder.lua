@@ -1,9 +1,11 @@
 local os_Time = os.time
-
+print("=== error_forwarder.lua loading ===")
+print("ErrorForwarder table:", ErrorForwarder)
+print("ErrorForwarder.Discord:", ErrorForwarder.Discord)
 local log = ErrorForwarder.Logger
 local Config = ErrorForwarder.Config
 local Helpers = ErrorForwarder.Helpers
-local Discord = ErrorForwarder.Discord
+
 local queueName = "CFC_ErrorForwarderQueue"
 
 --- @class ErrorForwarderForwarder
@@ -65,12 +67,14 @@ function Forwarder:QueueError( luaError )
     self.queue[fullError] = newError
 end
 
---- Forwards all queued Errors to Discord
+--- Forwards all queued Errors to Discord1
 function Forwarder:ForwardErrors()
+    print("=== ForwardErrors called ===")
+    print("ErrorForwarder.Discord at call time:", ErrorForwarder.Discord)
     for errorString, errorData in pairs( self.queue ) do
         log.debug( "Sending queued error to Discord: " .. errorString )
         ProtectedCall( function()
-            Discord:Send( errorData )
+            ErrorForwarder.Discord:Send( errorData )
         end )
     end
 

@@ -19,10 +19,6 @@ function DI:new()
         end )
     end
 
-    kotSock.hook( "SVMessageReply", function( data )
-        log.info( "Webhook delivered, queue size: " .. #self.queue )
-        self:sendNext()
-    end )
 end
 
 function DI:saveQueue()
@@ -63,21 +59,19 @@ function DI:sendNext()
         return
     end
 
-    log.info( "Sending via kotSock. Queue size: " .. #self.queue )
+    print( "kotSock:", kotSock )
+    print( "kotSock.sendT:", kotSock.sendT )
 
     local success = ProtectedCall( function()
         kotSock.sendT( "SVMessage", {
             isClientside = item.isClientside,
-            body = item.body,         
+            body = item.body,
             rawData = item.rawData,
         } )
     end )
 
-    if not success then
-        log.err( "kotSock send failed, skipping item." )
-        self:sendNext()
-    end
-
+    print( "sendT success:", success )
+    self:sendNext()
 end
 
 function DI:enqueue( item )
@@ -91,14 +85,6 @@ end
 
 function DI:Send( data )
     local isClientside = data.isClientside
-    local realm = isClientside and "client" or "server"
-
-    local url = Config.webhook[realm]
-    if url then url = url:GetString() end
-    if not url or #url == 0 then
-        log.err( "Missing Discord webhook URL for " .. realm .. " realm." )
-        return
-    end
 
     self:enqueue{
         isClientside = isClientside,
@@ -106,6 +92,5 @@ function DI:Send( data )
         rawData = data,
     }
 end
-
 DI:new()
 ErrorForwarder.Discord = DI

@@ -2,17 +2,6 @@ include( "logger.lua" )
 local log = ErrorForwarder.Logger
 local colors = ErrorForwarder.colors
 
-if util.IsBinaryModuleInstalled( "kot" ) then
-    require( "kot" )
-else
-    log.err( "Kotsock module is not installed!" )
-    log.warn( "This addon cannot function without the Kotsock module, as Discord blocks Gmod's base UDP Agent." )
-    log.warn( "Please visit this page and download the latest version of the module for your system ", colors.debug, "(then place it in lua/bin/):" )
-    log.err( "Preventing addon from loading....." )
-
-    return
-end
-
 require( "formdata" )
 include( "helpers.lua" )
 include( "config.lua" )

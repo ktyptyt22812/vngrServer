@@ -15,6 +15,8 @@
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 import asyncio
 import json
+import aiohttp
+
 from room_manager import RoomManager
 #KE 6.3.5
 class MessageProcessor:
@@ -183,47 +185,49 @@ class MessageProcessor:
         result["recvid"] = recv_id
 
         self.gmod.send("SVRoomStats", result)
-    async def _handle_error_forwarder(self, data):
+    async def _handle_error_forwarder(self, data: dict):
         is_clientside = data.get('isClientside', False)
-        body = data.get('body')  
-
+        body = data.get('body')
+    
         if not body:
             return
-
+    
+        if isinstance(body, dict):
+            import json
+            body = json.dumps(body, ensure_ascii=False)
+    
         webhook_url = (
             self.config.DISCORD_WEBHOOK_CLIENT
             if is_clientside
             else self.config.DISCORD_WEBHOOK_SERVER
         )
-
+    
         if not webhook_url:
-            print(f"Missing webhook URL for {'client' if is_clientside else 'server'} realm")
+            print(f"[ErrorForwarder] Missing webhook URL")
             return
-
+    
         try:
-            import aiohttp
             async with aiohttp.ClientSession() as session:
                 async with session.post(
                     webhook_url,
-                    data={'payload_json': body},
+                    data={'payload_json': body}, 
                     headers={'User-Agent': 'CFC Error Forwarder v1'},
                     timeout=aiohttp.ClientTimeout(total=25)
                 ) as response:
                     if response.status == 429:
                         resp_body = await response.text()
-                        import json
                         retry_data = json.loads(resp_body)
                         retry_after = retry_data.get('retry_after', 5)
-                        print(f"Rate limited, retry after {retry_after}s")
+                        print(f"[ErrorForwarder] Rate limited, retry after {retry_after}s")
                     elif response.status >= 400:
                         resp_body = await response.text()
-                        print(f"Webhook error {response.status}: {resp_body}")
+                        print(f"[ErrorForwarder] Webhook error {response.status}: {resp_body}")
                     else:
-                        print(f"Webhook delivered ({'client' if is_clientside else 'server'})")
-
+                        print(f"[ErrorForwarder] Webhook delivered ({'client' if is_clientside else 'server'})")
+    
             self.gmod.send('SVMessageReply', {'status': 'ok'})
-
+    
         except Exception as e:
-            print(f"[ErrorForwarder] Failed to send webhook: {e}")
+            print(f"[ErrorForwarder] Failed: {e}")
     def stop(self):
         self.stop_event.set()
