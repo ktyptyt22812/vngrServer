@@ -13,7 +13,7 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
-
+import os
 class Config:
     def __init__(self):
         self.DISABLE_DISCORD = os.environ.get('DISABLE_DISCORD', 'false').lower() == 'true'
