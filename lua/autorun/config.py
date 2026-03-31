@@ -29,6 +29,8 @@ class Config:
         self.Debug = True
         self.Debug_GAPI = True
         os.makedirs(self.SCREENSHOTS_DIR, exist_ok=True)
+        self.DISCORD_WEBHOOK_SERVER = os.environ.get('DISCORD_WEBHOOK_SERVER', '')
+        self.DISCORD_WEBHOOK_CLIENT = os.environ.get('DISCORD_WEBHOOK_CLIENT', '')
     def validate(self):
         errors = []
         if not self.DISABLE_DISCORD and not self.DISCORD_BOT_TOKEN:

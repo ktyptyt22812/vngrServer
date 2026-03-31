@@ -56,7 +56,6 @@ class MessageProcessor:
             'SVGetGroups': self._handle_get_groups,
             'SVMessage': self._handle_sv_message,
             'SVMessageReply': self._handle_sv_message,
-            # ← вот сюда нужно добавить:
             'SVCreateRoom':  self._handle_create_room,
             'SVDeleteRoom':  self._handle_delete_room,
             'SVRoomInfo':    self._handle_room_info,
@@ -99,6 +98,10 @@ class MessageProcessor:
                 text = self.telegram_bot.embed_to_text(embed_data)
                 await self.telegram_bot.send_message(text)
             print("Sent embed to platforms")
+
+        elif isinstance(data, dict) and 'body' in data:
+            await self._handle_error_forwarder(data)
+
         elif isinstance(data, list) and len(data) > 0:
             message_text = data[0]
             await self._send_to_platforms(message_text)
@@ -118,7 +121,7 @@ class MessageProcessor:
         if self.telegram_bot:
             await self.telegram_bot.send_message(text)
     async def _handle_create_room(self, data: dict):
-        if not self.room_manager:#
+        if not self.room_manager:
             return
 
         steamid = data.get("steamid") or (data.get("2") or {}).get("steamid")
@@ -180,5 +183,47 @@ class MessageProcessor:
         result["recvid"] = recv_id
 
         self.gmod.send("SVRoomStats", result)
+    async def _handle_error_forwarder(self, data):
+        is_clientside = data.get('isClientside', False)
+        body = data.get('body')  
+
+        if not body:
+            return
+
+        webhook_url = (
+            self.config.DISCORD_WEBHOOK_CLIENT
+            if is_clientside
+            else self.config.DISCORD_WEBHOOK_SERVER
+        )
+
+        if not webhook_url:
+            print(f"Missing webhook URL for {'client' if is_clientside else 'server'} realm")
+            return
+
+        try:
+            import aiohttp
+            async with aiohttp.ClientSession() as session:
+                async with session.post(
+                    webhook_url,
+                    data={'payload_json': body},
+                    headers={'User-Agent': 'CFC Error Forwarder v1'},
+                    timeout=aiohttp.ClientTimeout(total=25)
+                ) as response:
+                    if response.status == 429:
+                        resp_body = await response.text()
+                        import json
+                        retry_data = json.loads(resp_body)
+                        retry_after = retry_data.get('retry_after', 5)
+                        print(f"Rate limited, retry after {retry_after}s")
+                    elif response.status >= 400:
+                        resp_body = await response.text()
+                        print(f"Webhook error {response.status}: {resp_body}")
+                    else:
+                        print(f"Webhook delivered ({'client' if is_clientside else 'server'})")
+
+            self.gmod.send('SVMessageReply', {'status': 'ok'})
+
+        except Exception as e:
+            print(f"[ErrorForwarder] Failed to send webhook: {e}")
     def stop(self):
         self.stop_event.set()

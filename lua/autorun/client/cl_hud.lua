@@ -62,8 +62,7 @@ end)
 ]]
 local function rmgavno()
      for k, v in pairs( g_SpawnMenu.CreateMenu.Items ) do
-        if (v.Tab:GetText() == language.GetPhrase("spawnmenu.category.postprocess") or
-            v.Tab:GetText() == language.GetPhrase("spawnmenu.category.dupes") or
+        if (v.Tab:GetText() == language.GetPhrase("spawnmenu.category.dupes") or
             v.Tab:GetText() == language.GetPhrase("spawnmenu.category.saves")) then
             g_SpawnMenu.CreateMenu:CloseTab( v.Tab, true )
             rmgavno()
