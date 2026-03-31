@@ -91,14 +91,14 @@ class DiscordBot:
             urls = re.findall(r'https?://\S+', text_content)
             self.gmod.send('DSMessage', [
                 str(message.author.id),
-                f"{message.author}",
+                f"{message.author.display_name}",
                 text_content,
                 urls,
                 None,
                 bool(urls)
             ])
             await self.message_processor.forward_to_telegram(
-                f"[Discord] {message.author}: {text_content}"
+                f"[Discord] {message.author.display_name}: {text_content}"
             )
             
         except Exception as e:
