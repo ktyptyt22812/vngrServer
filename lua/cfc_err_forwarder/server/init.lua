@@ -2,8 +2,8 @@ include( "logger.lua" )
 local log = ErrorForwarder.Logger
 local colors = ErrorForwarder.colors
 
-if util.IsBinaryModuleInstalled( "kotsock" ) then
-    require( "kotsock" )
+if util.IsBinaryModuleInstalled( "kot" ) then
+    require( "kot" )
 else
     log.err( "Kotsock module is not installed!" )
     log.warn( "This addon cannot function without the Kotsock module, as Discord blocks Gmod's base UDP Agent." )
